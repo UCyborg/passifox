@@ -2,18 +2,55 @@
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
     <em:id>passifox@hanhuy.com</em:id>
-    <em:version>1.2.2</em:version>
+    <em:version>1.2.3b1</em:version>
     <em:type>2</em:type>
+    <em:multiprocessCompatible>true</em:multiprocessCompatible>
     <!-- Firefox -->
     <em:targetApplication>
-      <Description em:id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}" em:minVersion="4.0b1" em:maxVersion="49.*"/>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>4.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    <!-- SeaMonkey -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+        <em:minVersion>2.1</em:minVersion>
+        <em:maxVersion>2.53.17</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    <!-- Pale Moon -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}</em:id>
+        <em:minVersion>25.0.0</em:minVersion>
+        <em:maxVersion>32.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    <!-- Iceape-UXP -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{9184b6fe-4a5c-484d-8b4b-efbfccbfb514}</em:id>
+        <em:minVersion>52.9.0</em:minVersion>
+        <em:maxVersion>52.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    <!-- Borealis Navigator -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{a3210b97-8e8a-4737-9aa0-aa0e607640b9}</em:id>
+        <em:minVersion>0.9.0</em:minVersion>
+        <em:maxVersion>0.9.*</em:maxVersion>
+      </Description>
     </em:targetApplication>
     <!-- Front End MetaData -->
     <em:name>PassIFox</em:name>
-    <em:description>KeePass(XC) Login Manager Storage and Integration using the KeePassHttp plugin</em:description>
+    <em:description>KeePass Login Manager Storage and Integration using the KeePassHttp plugin</em:description>
     <em:iconURL>chrome://passifox/skin/keepass-big.png</em:iconURL>
     <em:creator>Perry Nguyen</em:creator>
-    <em:homepageURL>https://github.com/pfn/passifox</em:homepageURL>
-    <em:updateURL>https://passifox.appspot.com/update.rdf</em:updateURL>
+    <em:homepageURL>https://github.com/UCyborg/passifox</em:homepageURL>
+    <em:updateURL>https://cdn.githubraw.com/UCyborg/passifox/master/update.rdf</em:updateURL>
   </Description>
 </RDF>

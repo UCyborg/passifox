@@ -1,9 +1,11 @@
+"use strict";
+
 (function() {
-  Cu.import("resource://gre/modules/Services.jsm");
-  Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-  XPCOMUtils.defineLazyServiceGetter(this, "kpf",
+  Components.utils.import("resource://gre/modules/Services.jsm");
+  Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+  XPCOMUtils.defineLazyServiceGetter(window, "kpf",
     "@hanhuy.com/login-manager-storage;1",
-    Ci.nsILoginManagerStorage);
+    Components.interfaces.nsILoginManagerStorage);
 
   function $(id) {
     return document.getElementById(id);
@@ -35,7 +37,7 @@
       $('kpf-insert-user').hidden = !textinput;
       $('kpf-context-sep').hidden = !textinput;
 
-      if (node instanceof Ci.nsIDOMHTMLInputElement)
+      if (node instanceof Components.interfaces.nsIDOMHTMLInputElement)
         password = node.type.toLowerCase() == "password";
       if (password && !node.form)
         $('kpf-insert-user').hidden = true;
@@ -51,7 +53,7 @@
         return [u, p];
       for (let i = 0; i < form.elements.length; i++) {
         let e = form.elements[i];
-        if (e instanceof Ci.nsIDOMHTMLInputElement) {
+        if (e instanceof Components.interfaces.nsIDOMHTMLInputElement) {
           if (u != null && u !== e &&
             e.type.toLowerCase() == "password") {
             p = e;
@@ -99,7 +101,9 @@
           // For some reason, can't open a menupopup from here
           // use a select prompt instead
           let selected = {};
-          let items = logins.map(function(i) i.Name + " - " + i.Login);
+          let items = logins.map(function(i) {
+            return i.Name + " - " + i.Login;
+          });
           let r = Services.prompt.select(window,
             "Select a login", "Pick a login to fill in",
             logins.length, items, selected);

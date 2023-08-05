@@ -1,12 +1,16 @@
+"use strict";
+
 const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://passifox/modules/KeePassFox.jsm");
+Cu.import("resource://passifox-modules/KeePassFox.jsm");
 
 function LoginManagerStorage() {
   this.wrappedJSObject = this;
-  XPCOMUtils.defineLazyGetter(this, "_kpf", function() new KeePassFox());
+  XPCOMUtils.defineLazyGetter(this, "_kpf", function() {
+    return new KeePassFox();
+  });
   XPCOMUtils.defineLazyGetter(this, "_loginSavingDB", function() {
     let f = Services.dirsvc.get("ProfD", Ci.nsIFile);
     f.append("passifox-ignore-hosts.sqlite");
@@ -22,8 +26,11 @@ function LoginManagerStorage() {
     return c;
   });
 
-  function makeSt(s)
-  function() this._loginSavingDB.createStatement(s);
+  function makeSt(s) {
+    return function() {
+      return this._loginSavingDB.createStatement(s);
+    };
+  }
   XPCOMUtils.defineLazyGetter(this, "_getAllLoginSavingSt",
     makeSt("SELECT name FROM hosts"));
   XPCOMUtils.defineLazyGetter(this, "_insLoginSavingSt",
@@ -52,21 +59,21 @@ LoginManagerStorage.prototype = {
   },
   uiBusy: false, // XXX seems to be needed in <=ff4.0b7
   log: function(m) {
-    if (!this._kpf._debug)
-      return;
-    Services.console.logStringMessage("LoginManagerStorage: " + m);
-  },
-  stub: function(arguments) {
-    if (!this._kpf._debug)
-      return;
-    let args = [];
-    for (let i = 0; i < arguments.length; i++) {
-      let arg = arguments[i];
-      if (typeof(arg) == "object")
-        arg = JSON.stringify(arg);
-      args.push(arg);
+    if (this._kpf._debug) {
+      Services.console.logStringMessage("LoginManagerStorage: " + m);
     }
-    this.log(arguments.callee.name + "(" + args.join(",") + ")");
+  },
+  stub: function(passedArguments) {
+    if (this._kpf._debug) {
+      let args = [];
+      for (let i = 0; i < passedArguments.length; i++) {
+        let arg = passedArguments[i];
+        if (typeof(arg) == "object")
+          arg = JSON.stringify(arg);
+        args.push(arg);
+      }
+      this.log(new Error().stack.split("\n")[1].split("@")[0] + "(" + args.join(",") + ")");
+    }
   },
 
   init: function _init() {}, // don't need to init
@@ -232,7 +239,9 @@ LoginManagerStorage.prototype = {
   setLoginSavingEnabled: function(hostname, enabled) {
     let st = enabled ? this._delLoginSavingSt : this._insLoginSavingSt;
     st.params['name'] = hostname;
-    this._doWithLoginSavingDB(st, function() st.execute());
+    this._doWithLoginSavingDB(st, function() {
+      st.execute();
+    });
   },
   _doWithLoginSavingDB: function(st, r) {
     let c = this._loginSavingDB;
@@ -295,3 +304,4 @@ LoginManagerStorage.prototype = {
 };
 
 const NSGetFactory = XPCOMUtils.generateNSGetFactory([LoginManagerStorage]);
+

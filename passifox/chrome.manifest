@@ -1,10 +1,11 @@
 content  passifox             chrome/content/
 skin     passifox classic/1.0 chrome/skin/default/
-resource passifox ./
+resource passifox-modules     modules/
 
-overlay chrome://browser/content/browser.xul chrome://passifox/content/passifox.xul
+overlay chrome://browser/content/browser.xul     chrome://passifox/content/passifox.xul application={ec8030f7-c20a-464f-9b0e-13a3a9e97384} application={8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}
+overlay chrome://navigator/content/navigator.xul chrome://passifox/content/passifox.xul application={92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a} application={9184b6fe-4a5c-484d-8b4b-efbfccbfb514} application={a3210b97-8e8a-4737-9aa0-aa0e607640b9}
 
-contract  @hanhuy.com/login-manager-storage;1 {fa199659-10c4-4e3a-a73b-e2b4e1deae96}
 component {fa199659-10c4-4e3a-a73b-e2b4e1deae96} components/loginmanagerstorage.js
+contract  @hanhuy.com/login-manager-storage;1    {fa199659-10c4-4e3a-a73b-e2b4e1deae96}
 
 category login-manager-storage nsILoginManagerStorage @hanhuy.com/login-manager-storage;1

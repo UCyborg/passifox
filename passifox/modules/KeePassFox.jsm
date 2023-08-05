@@ -1,3 +1,5 @@
+"use strict";
+
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -27,6 +29,14 @@ function KeePassFox() {
   XPCOMUtils.defineLazyGetter(this, "_crypto", function() {
     return new WeaveCrypto();
   });
+  this._cryptoWrap = function(func, params) {
+    if (typeof Symbol != "undefined" && typeof Symbol.toStringTag != "undefined" && func[Symbol.toStringTag] === "AsyncFunction") {
+      typeof Async == "undefined" && Cu.import("resource://services-common/async.js");
+      return Async.promiseSpinningly(func.apply(this._crypto, params));
+    } else {
+      return func.apply(this._crypto, params);
+    }
+  };
 
   this._prefBranch = Services.prefs.getBranch("signon.");
   this._myPrefs = Services.prefs.getBranch("extensions.passifox.");
@@ -43,28 +53,28 @@ function KeePassFox() {
       kpf.log("keepassHttpUrl updated" + kpf._keepassHttpUrl);
     }
   };
-  this._prefBranch.QueryInterface(Ci.nsIPrefBranch2);
+  this._prefBranch.QueryInterface(Ci.nsIPrefBranch2 || Ci.nsIPrefBranch);
   this._prefBranch.addObserver("debug", this._observer, false);
   this._debug = this._prefBranch.getBoolPref("debug");
 
   this._keepassHttpUrl = this._myPrefs.getCharPref("keepasshttp_url");
-  this._myPrefs.QueryInterface(Ci.nsIPrefBranch2);
+  this._myPrefs.QueryInterface(Ci.nsIPrefBranch2 || Ci.nsIPrefBranch);
   this._myPrefs.addObserver("keepasshttp_url", this._observer, false);
 }
 
 KeePassFox.reload = function() {
   Services.console.logStringMessage("Reloading KeePassFox module");
-  let l = Cc['@mozilla.org/moz/jssubscript-loader;1']
-    .getService(Ci.mozIJSSubScriptLoader);
-  l.loadSubScript("resource://passifox/modules/KeePassFox.jsm");
+  Cc['@mozilla.org/moz/jssubscript-loader;1']
+    .getService(Ci.mozIJSSubScriptLoader)
+    .loadSubScript("resource://passifox-modules/KeePassFox.jsm");
 };
 
 KeePassFox.prototype = {
   _associated: false,
   log: function(m) {
-    if (!this._debug)
-      return;
-    Services.console.logStringMessage("KeePassFox: " + m);
+    if (this._debug) {
+      Services.console.logStringMessage("KeePassFox: " + m);
+    }
   },
   _cache: {}, // use a cache to throttle get_logins requests
   _set_crypto_key: function(id, key) {
@@ -74,8 +84,7 @@ KeePassFox.prototype = {
       storage.removeLogin(logins[i]);
     }
     this.log("Storing key in mozStorage");
-    let l = Cc['@mozilla.org/login-manager/loginInfo;1']
-      .createInstance(Ci.nsILoginInfo);
+    let l = Cc['@mozilla.org/login-manager/loginInfo;1'].createInstance(Ci.nsILoginInfo);
     l.init(AES_KEY_URL, null, null, id, key, "", "");
     storage.addLogin(l);
   },
@@ -123,16 +132,16 @@ KeePassFox.prototype = {
 
     let [id, key] = this._set_verifier(request);
     let iv = request.Nonce;
-    request.Login = this._crypto.encrypt(login.username, key, iv);
-    request.Password = this._crypto.encrypt(login.password, key, iv);
-    request.Url = this._crypto.encrypt(login.url, key, iv);
+    request.Login = this._cryptoWrap(this._crypto.encrypt, [login.username, key, iv]);
+    request.Password = this._cryptoWrap(this._crypto.encrypt, [login.password, key, iv]);
+    request.Url = this._cryptoWrap(this._crypto.encrypt, [login.url, key, iv]);;
 
     if (login.submiturl)
-      request.SubmitUrl = this._crypto.encrypt(login.submiturl, key, iv);
+      request.SubmitUrl = this._cryptoWrap(this._crypto.encrypt, [login.submiturl, key, iv]);
     if (login.uuid)
-      request.Uuid = this._crypto.encrypt(login.uuid, key, iv);
+      request.Uuid = this._cryptoWrap(this._crypto.encrypt, [login.uuid, key, iv]);
     if (login.realm)
-      request.Realm = this._crypto.encrypt(login.realm, key, iv);
+      request.Realm = this._cryptoWrap(this._crypto.encrypt, [login.realm, key, iv]);
 
     let [s, response, ready] = this._send(request);
     if (this._success(s, ready)) {
@@ -160,11 +169,11 @@ KeePassFox.prototype = {
     };
     let [id, key] = this._set_verifier(request);
     let iv = request.Nonce;
-    request.Url = this._crypto.encrypt(url, key, iv);
+    request.Url = this._cryptoWrap(this._crypto.encrypt, [url, key, iv]);
     if (submiturl)
-      request.SubmitUrl = this._crypto.encrypt(submiturl, key, iv);
+      request.SubmitUrl = this._cryptoWrap(this._crypto.encrypt, [submiturl, key, iv]);
     if (realm)
-      request.Realm = this._crypto.encrypt(realm, key, iv);
+      request.Realm = this._cryptoWrap(this._crypto.encrypt, [realm, key, iv]);
     let [s, response, ready] = this._send(request);
     let entries = [];
     if (this._success(s, ready)) {
@@ -192,7 +201,7 @@ KeePassFox.prototype = {
       RequestType: "get-logins-count",
     };
     let [id, key] = this._set_verifier(request);
-    request.Url = this._crypto.encrypt(url, key, request.Nonce);
+    request.Url = this._cryptoWrap(this._crypto.encrypt, [url, key, request.Nonce]);
     let [s, response, ready] = this._send(request);
     let entries = [];
     if (this._success(s, ready)) {
@@ -225,11 +234,11 @@ KeePassFox.prototype = {
   },
 
   _decrypt_entry: function(e, key, iv) {
-    e.Login = this._crypto.decrypt(e.Login, key, iv);
-    e.Uuid = this._crypto.decrypt(e.Uuid, key, iv);
-    e.Name = this._crypto.decrypt(e.Name, key, iv);
+    e.Login = this._cryptoWrap(this._crypto.decrypt, [e.Login, key, iv]);
+    e.Uuid = this._cryptoWrap(this._crypto.decrypt, [e.Uuid, key, iv]);
+    e.Name = this._cryptoWrap(this._crypto.decrypt, [e.Name, key, iv]);
     if (e.Password) {
-      e.Password = this._crypto.decrypt(e.Password, key, iv);
+      e.Password = this._cryptoWrap(this._crypto.decrypt, [e.Password, key, iv]);
     }
   },
 
@@ -302,7 +311,7 @@ KeePassFox.prototype = {
   _associate: function() {
     if (this._associated)
       return;
-    let key = this._crypto.generateRandomKey();
+    let key = this._cryptoWrap(this._crypto.generateRandomKey, []);
     let request = {
       RequestType: "associate",
       Key: key,
@@ -335,7 +344,7 @@ KeePassFox.prototype = {
       return false;
     let iv = response.Nonce;
     let crypted = response.Verifier;
-    let value = this._crypto.decrypt(crypted, key, iv);
+    let value = this._cryptoWrap(this._crypto.decrypt, [crypted, key, iv]);
 
     this._associated = value == iv;
     if (id) {
@@ -359,15 +368,19 @@ KeePassFox.prototype = {
     if (id)
       request.Id = id;
 
-    let iv = this._crypto.generateRandomIV();
+    let iv = this._cryptoWrap(this._crypto.generateRandomIV, []);
     request.Nonce = iv;
-    request.Verifier = this._crypto.encrypt(iv, key, iv);
+    request.Verifier = this._cryptoWrap(this._crypto.encrypt, [iv, key, iv]);
     return [id, key];
   },
   _send: function(request) {
     let thread = Services.tm.currentThread;
-    let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
-      .createInstance(Ci.nsIXMLHttpRequest);
+    let xhr;
+    if (typeof XMLHttpRequest == "undefined") {
+      xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(Ci.nsIXMLHttpRequest);
+    } else {
+      xhr = new XMLHttpRequest();
+    }
     xhr.open("POST", this._keepassHttpUrl, true);
     xhr.setRequestHeader("Content-Type", "application/json");
     let r = JSON.stringify(request);
