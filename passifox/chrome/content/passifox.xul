@@ -3,8 +3,9 @@
   <menupopup id="contentAreaContextMenu">
     <!-- reverse order due to insertafter -->
     <menuseparator id="kpf-context-sep" insertafter="context-sep-undo"/>
-    <menuitem id="kpf-insert-pass" label="Fill Pass Only" accesskey="o" insertafter="context-sep-undo"/>
-    <menuitem id="kpf-insert-user" label="Fill User &amp; Pass" accesskey="r" insertafter="context-sep-undo"/>
+    <menuitem id="kpf-insert-otp" label="Fill OTP" insertafter="context-sep-undo"/>
+    <menuitem id="kpf-insert-pass" label="Fill Password Only" insertafter="context-sep-undo"/>
+    <menuitem id="kpf-insert-user" label="Fill Username &amp; Password" insertafter="context-sep-undo"/>
   </menupopup>
   <script type="text/javascript" src="passifox.js"/>
 </overlay>

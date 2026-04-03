@@ -240,6 +240,12 @@ KeePassFox.prototype = {
     if (e.Password) {
       e.Password = this._cryptoWrap(this._crypto.decrypt, [e.Password, key, iv]);
     }
+    if (e.StringFields) {
+      for (let i = 0; i < e.StringFields.length; i++) {
+        e.StringFields[i].Key = this._cryptoWrap(this._crypto.decrypt, [e.StringFields[i].Key, key, iv]);
+        e.StringFields[i].Value = this._cryptoWrap(this._crypto.decrypt, [e.StringFields[i].Value, key, iv]);
+      }
+    }
   },
 
   _get_crypto_key: function() {

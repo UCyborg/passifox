@@ -3,6 +3,7 @@
 (function() {
   Components.utils.import("resource://gre/modules/Services.jsm");
   Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+  Components.utils.import("resource://passifox-modules/jsOTP.jsm");
   XPCOMUtils.defineLazyServiceGetter(window, "kpf",
     "@hanhuy.com/login-manager-storage;1",
     Components.interfaces.nsILoginManagerStorage);
@@ -35,6 +36,7 @@
       let password = false;
       let node = document.popupNode;
       $('kpf-insert-user').hidden = !textinput;
+      $('kpf-insert-otp').hidden = !textinput;
       $('kpf-context-sep').hidden = !textinput;
 
       if (node instanceof Components.interfaces.nsIDOMHTMLInputElement)
@@ -71,14 +73,25 @@
       return [u, p];
     }
 
-    function fillLogin(u, p, login) {
-      if (u != null)
-        u.value = login['Login'];
-      if (p != null)
-        p.value = login['Password'];
+    function fillLogin(u, p, login, type) {
+      if (type == "otp") {
+        if (p != null && login.StringFields) {
+          for (let i = 0; i < login.StringFields.length; i++) {
+            if (login.StringFields[i].Key == "TimeOtp-Secret-Base32") {
+              let totp = new jsOTP.totp();
+              p.value = totp.getOtp(login.StringFields[i].Value);
+            }
+          }
+        }
+      } else {
+        if (u != null)
+          u.value = login['Login'];
+        if (p != null)
+          p.value = login['Password'];
+      }
     }
 
-    function getLogin(both) {
+    function getLogin(type) {
       let node = gContextMenu.target;
       let url = gBrowser.currentURI.spec;
       let action = node.form ? node.form.action : null;
@@ -87,7 +100,7 @@
       if (logins.length > 0) {
         let node = gContextMenu.target;
         let u, p;
-        if (!both) {
+        if (type == "passonly" || type == "otp") {
           p = node;
         } else {
           // TODO handle password,password user,pass fields
@@ -96,7 +109,7 @@
         }
 
         if (logins.length == 1) {
-          fillLogin(u, p, logins[0]);
+          fillLogin(u, p, logins[0], type);
         } else {
           // For some reason, can't open a menupopup from here
           // use a select prompt instead
@@ -108,18 +121,21 @@
             "Select a login", "Pick a login to fill in",
             logins.length, items, selected);
           if (r) {
-            fillLogin(u, p, logins[selected.value]);
+            fillLogin(u, p, logins[selected.value], type);
           }
         }
       } else {
         showNotification("No logins found");
       }
     }
-    $('kpf-insert-user').addEventListener('command', function(e) {
-      getLogin(true);
+    $('kpf-insert-user').addEventListener('command', function (e) {
+      getLogin("both");
     }, false);
-    $('kpf-insert-pass').addEventListener('command', function(e) {
-      getLogin(false);
+    $('kpf-insert-pass').addEventListener('command', function (e) {
+      getLogin("passonly");
+    }, false);
+    $('kpf-insert-otp').addEventListener('command', function (e) {
+      getLogin("otp");
     }, false);
   }, false);
 })();
